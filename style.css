@@ -74,19 +74,8 @@ body {
     background-color: #45a049;
 }
 
-/* Земля */
-#game-container::after {
-    content: '';
-    position: absolute;
-    bottom: 60px; /* Сделано выше, чтобы оставить место под стрелки */
-    left: 0;
-    width: 100%;
-    height: 80px; /* Толще, чем было */
-    background-color: #8B4513;
-    z-index: 2;
-}
-
-/* Стрелки управления */
+/* Землю больше не рисуем через CSS! */
+/* .game-arrows и .arrow-btn — для стрелок управления */
 .game-arrows {
     position: absolute;
     left: 0;
@@ -97,7 +86,7 @@ body {
     justify-content: space-between;
     align-items: center;
     z-index: 10;
-    pointer-events: none; /* стрелки не мешают canvas, кроме своих кнопок */
+    pointer-events: none;
 }
 .arrow-btn {
     pointer-events: auto;
