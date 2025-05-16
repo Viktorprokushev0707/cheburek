@@ -39,7 +39,8 @@ starImg = loadImage('assets/star.png');
 // Constants
 const HERO_WIDTH = 100;
 const HERO_HEIGHT = 100;
-const GROUND_HEIGHT = 80;
+const GROUND_HEIGHT = 80;   // Толщина земли
+const ARROW_HEIGHT = 60;    // Высота области стрелок
 const ITEM_WIDTH = 30;
 const ITEM_HEIGHT = 30;
 const STAR_WIDTH = 35;
@@ -139,8 +140,8 @@ function updateItems() {
         item.y += item.speed;
 
         if (
-            item.y + ITEM_HEIGHT > canvas.height - GROUND_HEIGHT - HERO_HEIGHT &&
-            item.y < canvas.height - GROUND_HEIGHT &&
+            item.y + ITEM_HEIGHT > canvas.height - GROUND_HEIGHT - ARROW_HEIGHT - HERO_HEIGHT &&
+            item.y < canvas.height - GROUND_HEIGHT - ARROW_HEIGHT &&
             item.x < heroX + HERO_WIDTH &&
             item.x + ITEM_WIDTH > heroX
         ) {
@@ -182,12 +183,22 @@ function checkLoseCondition() {
     }
 }
 
+function drawGround() {
+    ctx.fillStyle = '#8B4513';
+    ctx.fillRect(
+        0,
+        canvas.height - GROUND_HEIGHT - ARROW_HEIGHT,
+        canvas.width,
+        GROUND_HEIGHT
+    );
+}
+
 function drawHero() {
     if (heroImg.complete && heroImg.naturalHeight !== 0) {
         ctx.drawImage(
             heroImg,
             heroX,
-            canvas.height - GROUND_HEIGHT - HERO_HEIGHT,
+            canvas.height - GROUND_HEIGHT - ARROW_HEIGHT - HERO_HEIGHT,
             HERO_WIDTH,
             HERO_HEIGHT
         );
@@ -195,7 +206,7 @@ function drawHero() {
         ctx.fillStyle = 'blue';
         ctx.fillRect(
             heroX,
-            canvas.height - GROUND_HEIGHT - HERO_HEIGHT,
+            canvas.height - GROUND_HEIGHT - ARROW_HEIGHT - HERO_HEIGHT,
             HERO_WIDTH,
             HERO_HEIGHT
         );
@@ -304,6 +315,7 @@ function gameLoop() {
     clearCanvas();
     drawClouds();
     updateClouds();
+    drawGround();
     spawnItem();
     updateItems();
     updateHeroPosition();
