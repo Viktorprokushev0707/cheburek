@@ -8,11 +8,15 @@ const gameOverScreen = document.getElementById('game-over-screen');
 const gameOverMessage = document.getElementById('game-over-message');
 const restartButton = document.getElementById('restart-button');
 
+// Стрелки
+const leftArrow = document.getElementById('left-arrow');
+const rightArrow = document.getElementById('right-arrow');
+
 let heroImg, cheburekImg, starImg;
 let imagesLoaded = 0;
 const totalImages = 3;
 
-// Load images
+// Картинки
 function loadImage(src) {
     const img = new Image();
     img.src = src;
@@ -32,10 +36,10 @@ heroImg = loadImage('assets/hero.png');
 cheburekImg = loadImage('assets/cheburek.png');
 starImg = loadImage('assets/star.png');
 
-// Game constants
-const HERO_WIDTH = 50;
-const HERO_HEIGHT = 50;
-const GROUND_HEIGHT = 50; // Matches CSS
+// Constants
+const HERO_WIDTH = 100;
+const HERO_HEIGHT = 100;
+const GROUND_HEIGHT = 80;
 const ITEM_WIDTH = 30;
 const ITEM_HEIGHT = 30;
 const STAR_WIDTH = 35;
@@ -44,16 +48,15 @@ const WIN_SCORE = 100;
 const MAX_LIVES = 10;
 const CHEBUREK_SPAWN_INTERVAL = 800;
 
-// Game state
+// State
 let score = 0;
 let lives = MAX_LIVES;
 let heroX;
-let heroTargetX = null; // Для плавного движения героя
 let items = [];
 let gameOver = false;
 let lastCheburekSpawnTime = 0;
 
-// Облака для анимации
+// Облака
 let clouds = [];
 const CLOUD_COUNT = 3;
 
@@ -91,7 +94,6 @@ function updateClouds() {
     });
 }
 
-// Canvas resize
 function resizeCanvas() {
     canvas.width = gameContainer.clientWidth;
     canvas.height = gameContainer.clientHeight;
@@ -99,14 +101,12 @@ function resizeCanvas() {
     initClouds();
 }
 
-// Game reset
 function resetGame() {
     score = 0;
     lives = MAX_LIVES;
     items = [];
     gameOver = false;
     heroX = canvas.width / 2 - HERO_WIDTH / 2;
-    heroTargetX = null;
     lastCheburekSpawnTime = 0;
     updateScoreboard();
     gameOverScreen.style.display = 'none';
@@ -119,31 +119,25 @@ function updateScoreboard() {
     livesDisplay.textContent = `Lives: ${lives}`;
 }
 
-// Спавн предметов
 function spawnItem() {
     const currentTime = Date.now();
     if (currentTime - lastCheburekSpawnTime > CHEBUREK_SPAWN_INTERVAL) {
         lastCheburekSpawnTime = currentTime;
-
         const x = Math.random() * (canvas.width - ITEM_WIDTH);
         const speed = 2 + Math.random() * 3;
         let type = 'cheburek';
-
         if (Math.random() < 0.1) {
             type = 'star';
         }
-
         items.push({ x, y: 0, type, speed });
     }
 }
 
-// Обновление и проверка столкновений
 function updateItems() {
     for (let i = items.length - 1; i >= 0; i--) {
         const item = items[i];
         item.y += item.speed;
 
-        // Collision with hero
         if (
             item.y + ITEM_HEIGHT > canvas.height - GROUND_HEIGHT - HERO_HEIGHT &&
             item.y < canvas.height - GROUND_HEIGHT &&
@@ -161,7 +155,6 @@ function updateItems() {
             continue;
         }
 
-        // Item missed (fell below screen)
         if (item.y > canvas.height) {
             if (item.type === 'cheburek') {
                 lives -= 1;
@@ -173,7 +166,6 @@ function updateItems() {
     }
 }
 
-// Win/Lose
 function checkWinCondition() {
     if (score >= WIN_SCORE) {
         gameOver = true;
@@ -190,13 +182,23 @@ function checkLoseCondition() {
     }
 }
 
-// Герой и предметы
 function drawHero() {
     if (heroImg.complete && heroImg.naturalHeight !== 0) {
-        ctx.drawImage(heroImg, heroX, canvas.height - GROUND_HEIGHT - HERO_HEIGHT, HERO_WIDTH, HERO_HEIGHT);
+        ctx.drawImage(
+            heroImg,
+            heroX,
+            canvas.height - GROUND_HEIGHT - HERO_HEIGHT,
+            HERO_WIDTH,
+            HERO_HEIGHT
+        );
     } else {
         ctx.fillStyle = 'blue';
-        ctx.fillRect(heroX, canvas.height - GROUND_HEIGHT - HERO_HEIGHT, HERO_WIDTH, HERO_HEIGHT);
+        ctx.fillRect(
+            heroX,
+            canvas.height - GROUND_HEIGHT - HERO_HEIGHT,
+            HERO_WIDTH,
+            HERO_HEIGHT
+        );
     }
 }
 
@@ -204,7 +206,13 @@ function drawItems() {
     items.forEach(item => {
         let imgToDraw = item.type === 'cheburek' ? cheburekImg : starImg;
         if (imgToDraw.complete && imgToDraw.naturalHeight !== 0) {
-            ctx.drawImage(imgToDraw, item.x, item.y, ITEM_WIDTH, ITEM_HEIGHT);
+            ctx.drawImage(
+                imgToDraw,
+                item.x,
+                item.y,
+                ITEM_WIDTH,
+                ITEM_HEIGHT
+            );
         } else {
             ctx.fillStyle = item.type === 'cheburek' ? 'brown' : 'green';
             ctx.fillRect(item.x, item.y, ITEM_WIDTH, ITEM_HEIGHT);
@@ -212,38 +220,78 @@ function drawItems() {
     });
 }
 
-// Управление героем (клавиатура)
-function handleKeyDown(e) {
-    if (gameOver) return;
-    const heroSpeed = 20;
-    if (e.key === 'ArrowLeft') {
+// --- Плавное управление героя по стрелкам ---
+let moveLeft = false;
+let moveRight = false;
+const heroSpeed = 6;
+
+// Touch стрелки
+leftArrow.addEventListener('touchstart', function(e) {
+    moveLeft = true;
+    e.preventDefault();
+});
+leftArrow.addEventListener('touchend', function(e) {
+    moveLeft = false;
+    e.preventDefault();
+});
+rightArrow.addEventListener('touchstart', function(e) {
+    moveRight = true;
+    e.preventDefault();
+});
+rightArrow.addEventListener('touchend', function(e) {
+    moveRight = false;
+    e.preventDefault();
+});
+// Mouse поддержка (чтобы работало и на компе)
+leftArrow.addEventListener('mousedown', function(e) {
+    moveLeft = true;
+});
+leftArrow.addEventListener('mouseup', function(e) {
+    moveLeft = false;
+});
+rightArrow.addEventListener('mousedown', function(e) {
+    moveRight = true;
+});
+rightArrow.addEventListener('mouseup', function(e) {
+    moveRight = false;
+});
+
+function updateHeroPosition() {
+    if (moveLeft) {
         heroX = Math.max(0, heroX - heroSpeed);
-    } else if (e.key === 'ArrowRight') {
+    }
+    if (moveRight) {
         heroX = Math.min(canvas.width - HERO_WIDTH, heroX + heroSpeed);
     }
 }
 
-// Управление героем (тач)
-function handleTouchStart(e) {
+// Для клавиатуры тоже
+function handleKeyDown(e) {
     if (gameOver) return;
+    if (e.key === 'ArrowLeft') {
+        moveLeft = true;
+    } else if (e.key === 'ArrowRight') {
+        moveRight = true;
+    }
+}
+function handleKeyUp(e) {
+    if (e.key === 'ArrowLeft') {
+        moveLeft = false;
+    } else if (e.key === 'ArrowRight') {
+        moveRight = false;
+    }
+}
+
+// Если пользователь тачит по самому канвасу (старое управление), герой сразу в это место:
+canvas.addEventListener('touchstart', function(e) {
+    if (gameOver) return;
+    if (e.target.classList.contains('arrow-btn')) return; // Не двигать если по стрелке
     const touchX = e.touches[0].clientX;
     const canvasRect = canvas.getBoundingClientRect();
     const relativeX = touchX - canvasRect.left;
-    heroTargetX = Math.max(0, Math.min(canvas.width - HERO_WIDTH, relativeX - HERO_WIDTH / 2));
+    heroX = Math.max(0, Math.min(canvas.width - HERO_WIDTH, relativeX - HERO_WIDTH / 2));
     e.preventDefault();
-}
-
-function updateHeroPosition() {
-    if (heroTargetX !== null) {
-        const dx = heroTargetX - heroX;
-        if (Math.abs(dx) < 3) {
-            heroX = heroTargetX;
-            heroTargetX = null;
-        } else {
-            heroX += dx * 0.2;
-        }
-    }
-}
+}, { passive: false });
 
 // Очистка canvas
 function clearCanvas() {
@@ -252,10 +300,7 @@ function clearCanvas() {
 
 // Главный цикл
 function gameLoop() {
-    if (gameOver) {
-        return;
-    }
-
+    if (gameOver) return;
     clearCanvas();
     drawClouds();
     updateClouds();
@@ -264,14 +309,13 @@ function gameLoop() {
     updateHeroPosition();
     drawHero();
     drawItems();
-
     requestAnimationFrame(gameLoop);
 }
 
 // Events
 window.addEventListener('resize', resizeCanvas);
 window.addEventListener('keydown', handleKeyDown);
-canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+window.addEventListener('keyup', handleKeyUp);
 restartButton.addEventListener('click', resetGame);
 
 // Начальная инициализация
@@ -285,5 +329,4 @@ const checkImagesAndStart = () => {
         setTimeout(checkImagesAndStart, 100);
     }
 };
-
 checkImagesAndStart();
